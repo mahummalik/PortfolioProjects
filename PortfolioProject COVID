@@ -1,0 +1,151 @@
+--CD
+SELECT location, CAST(date AS date), total_cases, total_deaths, population
+FROM coviddeaths
+ORDER BY 1,2
+
+
+SELECT *
+FROM coviddeaths
+WHERE continent is not null
+order by 3,4
+
+
+-- CD Total Cases vs Total Deaths
+SELECT location, CAST(date AS date), total_cases, total_deaths,
+CAST(total_deaths AS BIGINT)/CAST(total_cases AS BIGINT)*100 as death_percentage
+FROM coviddeaths
+WHERE continent is NOT NULL
+ORDER BY 1,2
+
+
+-- CD Total Cases vs Population
+SELECT location, CAST(date AS date), population, total_cases,
+CAST(total_cases AS decimal)/CAST(population AS decimal)*100 AS percent_population_infected
+FROM coviddeaths
+WHERE continent is not null
+ORDER BY 1,2
+
+
+
+--CD countries w highest infection rate compared to pop
+SELECT location, population, MAX(total_cases) AS highest_infection_count,
+MAX(CAST(total_cases AS decimal)/CAST(population AS decimal))*100 
+AS percent_population_infected
+FROM coviddeaths
+WHERE continent is not null
+GROUP BY location, population
+ORDER BY percent_population_infected DESC
+
+
+
+--CD Countries w highest death count per pop
+SELECT location, (MAX(CAST(total_deaths AS INT))) AS total_death_count
+FROM coviddeaths
+WHERE continent IS NOT NULL
+GROUP BY location
+ORDER BY total_death_count DESC
+
+
+
+-- CD Broken Down by Continent
+SELECT location, (MAX(CAST(total_deaths AS INT))) AS total_death_count
+FROM coviddeaths
+WHERE continent IS NULL
+GROUP BY location
+ORDER BY total_death_count DESC
+
+
+
+--CD + CV JOIN
+SELECT dea.continent, dea.location, CAST(dea.date AS date), dea.population,
+vac.new_vaccinations, SUM(CAST(vac.new_vaccinations AS BIGINT)) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.date) AS rolling_people_vaccinated
+FROM coviddeaths AS dea
+JOIN covidvaccinations AS vac
+    ON dea.location = vac.location
+    AND CAST(dea.date AS date) = CAST(vac.date AS date)
+    WHERE dea.continent is NOT NULL
+ORDER BY 2,3
+
+
+
+-- CD SHOWING GLOBAL #s
+SELECT SUM(CAST(new_cases AS BIGINT)) AS total_cases,
+SUM(CAST(new_deaths AS BIGINT)) AS total_deaths, 
+(SUM(CAST(new_deaths AS decimal)))/(SUM(CAST(new_cases AS decimal)))*100 AS death_percentage
+FROM coviddeaths
+WHERE continent is NOT NULL
+--GROUP BY date
+ORDER BY 1,2
+
+
+
+
+-- PopvsVQC. USE TEMP TABLE
+DROP TABLE IF EXISTS PercentPopulationVaccinated
+CREATE TEMPORARY TABLE PercentPopulationVaccinated
+(
+Continent VARCHAR(255),
+Location VARCHAR(255),
+Date timestamp,
+Population NUMERIC,
+New_Vaccinations NUMERIC,
+rolling_people_vaccinated NUMERIC
+)
+
+INSERT INTO PercentPopulationVaccinated
+SELECT dea.continent, dea.location, CAST(dea.date AS date), CAST(dea.population AS BIGINT),
+CAST(vac.new_vaccinations, SUM(CAST(vac.new_vaccinations AS BIGINT))
+OVER (PARTITION BY dea.location ORDER BY dea.location, dea.date) AS rolling_people_vaccinated
+FROM coviddeaths AS dea
+JOIN covidvaccinations AS vac
+    ON dea.location = vac.location
+    AND CAST(dea.date AS date) = CAST(vac.date AS date)
+    WHERE dea.continent is NOT NULL
+--ORDER BY 2,3
+
+     
+     
+     
+--- Creating VIEWS
+--Global #s
+CREATE VIEW PercentPopulationVaccinated AS
+(SELECT dea.continent, dea.location, CAST(dea.date AS date), CAST(dea.population AS BIGINT),
+CAST(vac.new_vaccinations AS BIGINT), SUM(CAST(vac.new_vaccinations AS BIGINT))
+OVER (PARTITION BY dea.location ORDER BY dea.location, dea.date) AS rolling_people_vaccinated
+FROM coviddeaths AS dea
+JOIN covidvaccinations AS vac
+    ON dea.location = vac.location
+    AND CAST(dea.date AS date) = CAST(vac.date AS date)
+    WHERE dea.continent is NOT NULL
+)
+
+--Pull up the global #s view:
+SELECT *
+FROM PercentPopulationVaccinated
+     
+     
+     
+     
+-- CD Broken Down by Continent CREATING VIEW
+CREATE VIEW DeathsByContinent AS
+(SELECT location, (MAX(CAST(total_deaths AS INT))) AS total_death_count
+FROM coviddeaths
+WHERE continent IS NULL
+GROUP BY location
+ORDER BY total_death_count DESC
+ )
+     
+
+SELECT *
+FROM DeathsByContinent
+     
+     
+     
+     
+     
+-- Countries w highest death count per population
+SELECT location,  MAX(cast(total_deaths AS INT)) AS total_death_count
+FROM coviddeaths
+--Where location like '%states%'
+GROUP BY location
+ORDER BY total_death_count DESC
