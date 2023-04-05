@@ -1,0 +1,75 @@
+-- Inner Joins, Full/Left/Right/Outer Joins --
+
+SELECT *
+FROM employeedemographics
+INNER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+    
+--
+SELECT *
+FROM employeedemographics 
+FULL OUTER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+    
+--
+SELECT *
+FROM employeedemographics 
+LEFT OUTER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+    
+--
+SELECT *
+FROM employeedemographics
+RIGHT OUTER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+
+---
+SELECT EmployeeDemographics.EmployeeID, FirstName, LastName, JobTitle, Salary
+FROM employeedemographics
+INNER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+    
+---
+SELECT EmployeeSalary.EmployeeID, FirstName, LastName, JobTitle, Salary
+FROM employeedemographics
+RIGHT OUTER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+    
+    
+    
+---
+SELECT EmployeeDemographics.EmployeeID, FirstName, LastName, JobTitle, Salary
+FROM employeedemographics
+RIGHT OUTER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+    
+---
+SELECT EmployeeDemographics.EmployeeID, FirstName, LastName, JobTitle, Salary
+FROM employeedemographics
+LEFT OUTER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+    
+    
+--- Robert California is pressure Michael Scott to meet his quarterly quota 
+---and Michael is almost there. He needs about $1k more. He comes up with
+---the genius idea to deduct pay from the highest paid employee at his
+---branch- besides himself.
+
+SELECT EmployeeDemographics.EmployeeID, FirstName, LastName, Salary
+FROM employeedemographics
+INNER JOIN employeesalary
+    ON EmployeeDemographics.employeeid = employeesalary.employeeid
+WHERE FirstName <> 'Michael'
+ORDER BY Salary DESC
+
+
+--- Kevin Malone, who is an accountant, thinks that he may have made a
+---mistake when looking at the average salary for our salesmen. We want to
+---calculate the average salary for our salesmen.
+
+SELECT JobTitle, AVG(Salary) 
+FROM EmployeeSalary
+INNER JOIN EmployeeDemograp hics
+    ON EmployeeDemographics.EmployeeID = employeesalary.EmployeeID
+WHERE JobTitle = 'Salesman'
+GROUP BY Jobtitle
